@@ -13,8 +13,8 @@ with open('options.json', 'r') as file:
 # Variáveis
 load_dotenv()
 client = discord.Client()
-bot = commands.Bot(command_prefix=options['prefix'], help_command=None)
-default_commands = {
+bot = commands.Bot(command_prefix=options['configs']['prefix'], help_command=None)
+default_commands = {  # Dicionário contendo os comandos do bot
     'RPG:': [
         'iniciar',
         'login',
@@ -23,12 +23,10 @@ default_commands = {
     'GERAL': [
         'rolar'
     ],
-    'CONFIGS': [
-        'configs',
+    'CRÉDITOS': [
         'creditos'
     ]
 }
-configurations = {}
 
 
 @bot.event
@@ -39,19 +37,14 @@ async def on_ready():
 # Comando de ajuda
 @bot.command(name='help')
 async def ajuda(ctx, *args):
-    embed = discord.Embed(
-        title='AJUDA',
-        description='Eu sou Pedro, o Mamaco Programador, e esta mensagem serve para dar uma ajudinha sobre os comandos que posso interpretar, o corno'
-                    'do João Pedro tá terminando de fazer o resto dos comandos, inclusive os do RPG, então é só ter um pouquinho de paciência :)',
-        color=discord.Color.blue()
+    embed = generate_embed(
+        'AJUDA',
+        'Eu sou Pedro, o Mamaco Programador, e esta mensagem serve para dar uma ajudinha sobre os comandos que posso interpretar, o corno'
+        'do João Pedro tá terminando de fazer o resto dos comandos, inclusive os do RPG, então é só ter um pouquinho de paciência :)',
+        default_commands,
+        discord.Color.blue(),
+        False
     )
-
-    for key in default_commands.keys():
-        all_commands = ''
-        for command in default_commands[key]:
-            print(command)
-            all_commands += f'{Text().code_block(command, "line")} '
-        embed.add_field(name=key, value=all_commands, inline=False)
 
     await ctx.send(embed=embed)
 
@@ -90,29 +83,32 @@ async def roll(ctx, *args):
     :param ctx: Mensagem
     :param args: Argumentos
     """
-    
+    # Validando para caso o usuário não tenha passado nenhum parâmetro
     if len(args) == 0:
         await ctx.send("Por favor, passe os parâmetros corretos!")
 
     results = []
+    index = None  # Index que vou utilizar para fazer as operações complexas
     for argument in args:
-        if 'd' in argument:
-            try:
-                rolls = argument[:argument.index('d')]
-                faces = int(argument[argument.index('d')+1:])
+        for letter in argument:  # Para cada letra dentro do argumento
+            if letter in '+-*/':  # Se a letra estiver dentre os símbolos
+                index = argument.index(letter)  # Eu pego o índice do símbolo
+    
+    dado = argument[:index] if bool(index) else argument[:]  # Pego o dado
+    
+    qtd = int(dado[:dado.index('d')])  # Quantidade de vezes que vou girar
+    faces = int(dado[dado.index('d')+1:])  # Faces do dado
+    operacao = argument[index:] if bool (index) else ""  # Pego a operação matemática passada
 
-                if rolls == '':
-                    rolls = 1
-                else:
-                    rolls = int(rolls)
-                for c in range(rolls):
-                    results.append(randint(1, faces))
+    for c in range(qtd):  # Faço a escolha dos resultados aleatoriamente
+        results.append(randint(1, faces))  # Adiciono o resultado em uma lista
+    
+    soma = sum(results)  # Calcula a soma dos resultados
 
-                await ctx.send(Text().code_block(f"{rolls} dado(s) de {faces} faces: \n{results} \nA soma foi: {sum(results)}", 'multiple'))
-            except ValueError:
-                await ctx.send(Text().code_block("Você passou algum parâmetro de forma incorreta, tente novamente, por favor!", 'multiple'))
-        else:
-            await ctx.send(argument)
+    soma_final = calcular_dado(soma, operacao)  # Calcula a soma final
+
+    await ctx.send(Text().code_block(f"Dado de {faces} faces girado {qtd} vezes \nResultado(s): {results} -> {soma}\n"
+                                        f"{soma}{operacao} = {soma_final}", 'multiple'))
 
 
 # ===================
@@ -123,23 +119,6 @@ async def roll(ctx, *args):
 @bot.command(name='rir')
 async def laugh(ctx, *args):
     await ctx.send(':joy_cat:'*10)
-
-
-# Comando de configurações
-@bot.command(name='configs')
-async def configs(ctx, *args):
-    if len(args) <= 0:  # Se nenhum parâmetro for passado
-        embed = discord.Embed(
-            title='CONFIGURAÇÕES',
-            description='Veja as configurações que podem ser alteradas à seguir:',
-            color=discord.Color.blue()
-        )
-    else:  # Se não
-        for command in args:  # Para cada comando nos parâmetros
-            if command == 'prefix':
-                pass
-
-    await ctx.send('CONFIGURAÇÕES')
 
 
 # Comando de mostrar os créditos
