@@ -14,19 +14,6 @@ with open('options.json', 'r') as file:
 load_dotenv()
 client = discord.Client()
 bot = commands.Bot(command_prefix=options['configs']['prefix'], help_command=None)
-default_commands = {  # Dicionário contendo os comandos do bot
-    'RPG:': [
-        'iniciar',
-        'login',
-        'ver'
-    ],
-    'GERAL': [
-        'rolar'
-    ],
-    'CRÉDITOS': [
-        'creditos'
-    ]
-}
 
 
 @bot.event
@@ -34,40 +21,25 @@ async def on_ready():
     print("Logged successfully!")
 
 
-# Comando de ajuda
-@bot.command(name='help')
-async def ajuda(ctx, *args):
-    embed = generate_embed(
-        'AJUDA',
-        'Eu sou Pedro, o Mamaco Programador, e esta mensagem serve para dar uma ajudinha sobre os comandos que posso interpretar, o corno'
-        'do João Pedro tá terminando de fazer o resto dos comandos, inclusive os do RPG, então é só ter um pouquinho de paciência :)',
-        default_commands,
-        discord.Color.blue(),
-        False
-    )
-
-    await ctx.send(embed=embed)
-
-
 # ===================
 # COMANDOS DO RPG
 # ===================
 
 # Iniciar o personagem
-@bot.command(name='iniciar')
-async def init(ctx, *args):
+@bot.command(name='iniciar', help='Comando que inicia o personagem.\n?iniciar')
+async def iniciar(ctx, *args):
     await ctx.send('COMANDO DE INICIAR PERSONAGEM')
 
 
 # Criar um personagem que já está feito
-@bot.command(name='login')
+@bot.command(name='login', help='Faz login em um personagem que já existe.\n?login <senha>')
 async def login(ctx, *args):
     await ctx.send('COMANDO DE LOGAR O PERSONAGEM')
 
 
 # Comando para ver o personagem
-@bot.command(name='ver')
-async def see(ctx, *args):
+@bot.command(name='ver', help='Ver atributos de um personagem com base no seu nome\n?ver <nome>')
+async def ver(ctx, *args):
     await ctx.send('COMANDO DE VER O PERSONAGEM')
 
 
@@ -76,16 +48,12 @@ async def see(ctx, *args):
 # ===================
 
 # Comando de rolar um dado
-@bot.command(name='rolar')
-async def roll(ctx, *args):
-    """
-    Rola um dado de acordo com os parâmetros passados
-    :param ctx: Mensagem
-    :param args: Argumentos
-    """
+@bot.command(name='rolar', help='Comando que rola um dado na estrutura:\n1d20(Operação) -> 1d20+3, 2d10*2, etc.\n?rolar <dado><operação>')
+async def rolar(ctx, *args):
     # Validando para caso o usuário não tenha passado nenhum parâmetro
     if len(args) == 0:
         await ctx.send("Por favor, passe os parâmetros corretos!")
+        return
 
     results = []
     index = None  # Index que vou utilizar para fazer as operações complexas
@@ -115,16 +83,61 @@ async def roll(ctx, *args):
 # COMANDOS DE CONFIGURAÇÕES
 # ===================
 
-
-@bot.command(name='rir')
-async def laugh(ctx, *args):
-    await ctx.send(':joy_cat:'*10)
-
-
 # Comando de mostrar os créditos
-@bot.command(name='creditos')
-async def credit(ctx, *args):
+@bot.command(name='creditos', help='Comando para dar os créditos\n?creditos')
+async def creditos(ctx, *args):
     await ctx.send('Bot criado por João Pedro. Jotinha#0252 :sunglasses:')
+
+
+# ===================
+# COMANDOS DE AJUDA
+# ===================
+
+# Comando de ajuda
+@bot.command(name='ajuda', help='Comando que mostra os outros comandos...')
+async def ajuda(ctx, comando='', *args):
+    default_commands = {  # Dicionário contendo os comandos do bot
+        'RPG:': [
+            iniciar,
+            login,
+            ver
+        ],
+        'GERAL': [
+            rolar
+        ],
+        'CRÉDITOS': [
+            creditos
+        ]
+    }
+
+    if comando == '':  # Se não tiver passado nenhum comando (Apenas digitei ?ajuda)
+        embed = generate_embed(  # Eu gero um EMBED contendo os comandos
+            'AJUDA',
+            'Eu sou Pedro, o Mamaco Programador, e esta mensagem serve para dar uma ajudinha sobre os comandos que posso interpretar, o corno'
+            'do João Pedro tá terminando de fazer o resto dos comandos, inclusive os do RPG, então é só ter um pouquinho de paciência :)',
+            default_commands,
+            discord.Color.blue(),
+            False
+        )
+        await ctx.send(embed=embed)  # Mostro o comando no chat do discord
+    else:  # Se não
+        for lista in default_commands.values():  # Para cada lista dentro dos valores de default_commands
+            for command in lista:  # Para cada comando dentro dessas listas
+                if command.name == comando:  # Se o comando da lista for igual ao comando passado pelo usuário
+                    formated_command = discord.Embed(
+                        title=f'Comando {Text().italic(command.name)}',
+                        description=command.help,
+                        color=discord.Color.blue()
+                    )
+                    await ctx.send(embed=formated_command)
+                    return
+        else:
+            await ctx.send('O comando informado não está na lista dos comandos cadstrados, por favor tente novamente')
+            
+
+@bot.command()
+async def dm(ctx, person, *message):
+    await person.send(message)
 
 
 bot.run(os.getenv('BOT_TOKEN'))

@@ -34,7 +34,7 @@ class Text:
         return f'> {text}'
 
 
-def generate_embed(title: str, desc: str, dic: dict, color: discord.Color = None, inline = True, tp: str = 'list') -> discord.Embed:
+def generate_embed(title: str, desc: str, dic: dict, color: discord.Color = None, inline = True) -> discord.Embed:
     """
     Essa função gera um EMBED do discord com base no dicionário passado
 
@@ -48,25 +48,19 @@ def generate_embed(title: str, desc: str, dic: dict, color: discord.Color = None
     Returns:
         discord.Embed: [description]
     """
-    embed = discord.Embed(
-        title=title,
-        description=desc,
-        color=color
+    embed = discord.Embed(  # Crio um EMBED
+        title=title,  # Título do embed
+        description=desc,  # Descrição do embed
+        color=color  # Cor do embed
     )
-    if tp == 'list':
-        for key in dic.keys():
-            all_commands = ''
-            for command in dic[key]:
-                all_commands += f'{Text().code_block(command, "line")} '
-            embed.add_field(name=key, value=all_commands, inline=inline)
-    elif tp == 'dict':
-        for key in dic.keys():
-            all_commands = ''
-            for command in dic[key]:
-                all_commands += f'{Text().code_block(command, "line")} '
-            embed.add_field(name=key, value=all_commands, inline=inline)
+
+    for key in dic.keys():  # Para cada chave na chave do dicionário
+        all_commands = ''  # Crio uma string para adicionar meus comandos
+        for command in dic[key]:  # Para cada comando no dicionário dos valores
+            all_commands += f'{Text().code_block(command, "line")} '  # Concateno all_commands com bloco de código
+        embed.add_field(name=key, value=all_commands, inline=inline)  # Adiciono um field
     
-    return embed
+    return embed  # Retorno o Embed
 
 
 def calcular_dado(valor: int, op: str) -> int:
